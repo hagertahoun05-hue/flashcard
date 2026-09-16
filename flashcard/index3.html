@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JS Concepts Flashcard Quiz</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #f8fafc;
+    }
+
+    .app-card {
+      width: 650px;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      border: 1px solid #334155;
+    }
+
+    /* Top Bar */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .header h2 {
+      font-size: 20px;
+      background: linear-gradient(to right, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-board {
+      font-size: 14px;
+      background: #0f172a;
+      padding: 6px 12px;
+      border-radius: 20px;
+      color: #94a3b8;
+    }
+
+    /* Flashcard Container with Flip Animation */
+    .card-container {
+      perspective: 1000px;
+      width: 100%;
+      height: 280px;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+
+    .flashcard {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease;
+      border-radius: 12px;
+    }
+
+    .flashcard.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 12px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      border: 2px solid #334155;
+    }
+
+    .card-front {
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+
+    .card-back {
+      background-color: #1e3a5f;
+      color: #38bdf8;
+      transform: rotateY(180deg);
+    }
+
+    .card-hint {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 15px;
+    }
+
+    .card-text {
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    /* Feedback Buttons */
+    .feedback-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-know {
+      background-color: #10b981;
+      color: white;
+    }
+
+    .btn-review {
+      background-color: #f59e0b;
+      color: white;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #334155;
+      padding-top: 16px;
+    }
+
+    .btn-nav {
+      background-color: #334155;
+      color: white;
+    }
+
+    .progress {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-card">
+    <div class="header">
+      <h2>JS Core Concepts Quiz</h2>
+      <div class="score-board">Known: <span id="knownCount" style="color:#10b981">0</span> | Review: <span id="reviewCount" style="color:#f59e0b">0</span></div>
+    </div>
+
+    <!-- Flashcard -->
+    <div class="card-container" onclick="flipCard()">
+      <div class="flashcard" id="flashcard">
+        <div class="card-face card-front">
+          <div class="card-text" id="questionText">Question goes here...</div>
+          <span class="card-hint">💡 Click card to reveal answer</span>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-text" id="answerText">Answer goes here...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Feedback -->
+    <div class="feedback-btns">
+      <button class="btn btn-know" onclick="markCard(true)">I Knew This ✅</button>
+      <button class="btn btn-review" onclick="markCard(false)">Need Review ⚠️</button>
+    </div>
+
+    <!-- Navigation -->
+    <div class="controls">
+      <button class="btn btn-nav" onclick="prevCard()">❮ Prev</button>
+      <span class="progress" id="progressText">1 / 5</span>
+      <button class="btn btn-nav" onclick="nextCard()">Next ❯</button>
+    </div>
+  </div>
+
+  <script>
+    const deck = [
+      { q: "What is the result of typeof null in JavaScript?", a: "'object' — This is a long-standing bug in JS kept for backward compatibility." },
+      { q: "How does the Modulo Operator (%) work in circular array navigation?", a: "Index = (currentIndex + 1) % array.length keep indices within valid bounds." },
+      { q: "What is the difference between setInterval and setTimeout?", a: "setTimeout executes once after a delay; setInterval repeats execution periodically until cleared." },
+      { q: "What is Event Bubbling in DOM manipulation?", a: "When an event triggers on an element, it propagates upward through its parent elements in the DOM tree." },
+      { q: "What is the purpose of 'use strict' in JavaScript?", a: "It enables Strict Mode, catching common coding bugs and preventing undeclared variables." }
+    ];
+
+    let currentIndex = 0;
+    let knownSet = new Set();
+    let reviewSet = new Set();
+
+    const flashcard = document.getElementById("flashcard");
+    const questionText = document.getElementById("questionText");
+    const answerText = document.getElementById("answerText");
+    const progressText = document.getElementById("progressText");
+    const knownCount = document.getElementById("knownCount");
+    const reviewCount = document.getElementById("reviewCount");
+
+    function renderCard() {
+      flashcard.classList.remove("flipped");
+      setTimeout(() => {
+        questionText.textContent = deck[currentIndex].q;
+        answerText.textContent = deck[currentIndex].a;
+        progressText.textContent = `${currentIndex + 1} / ${deck.length}`;
+      }, 150);
+    }
+
+    function flipCard() {
+      flashcard.classList.toggle("flipped");
+    }
+
+    function nextCard() {
+      currentIndex = (currentIndex + 1) % deck.length;
+      renderCard();
+    }
+
+    function prevCard() {
+      currentIndex = (currentIndex - 1 + deck.length) % deck.length;
+      renderCard();
+    }
+
+    function markCard(isKnown) {
+      if (isKnown) {
+        knownSet.add(currentIndex);
+        reviewSet.delete(currentIndex);
+      } else {
+        reviewSet.add(currentIndex);
+        knownSet.delete(currentIndex);
+      }
+      knownCount.textContent = knownSet.size;
+      reviewCount.textContent = reviewSet.size;
+      nextCard();
+    }
+
+    // Initial render
+    renderCard();
+  </script>
+
+</body>
+</html>
